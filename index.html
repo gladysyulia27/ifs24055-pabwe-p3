@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToDos App - Dashboard Produktivitas</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #F2EFE7;
+            color: #1f2937;
+        }
+        .bg-custom-primary { background-color: #3368A0; }
+        .text-custom-primary { color: #3368A0; }
+        .border-custom-primary { border-color: #3368A0; }
+        .bg-custom-bg { background-color: #F2EFE7; }
+    </style>
+</head>
+<body class="bg-custom-bg min-h-screen flex flex-col justify-between selection:bg-[#3368A0] selection:text-white">
+
+    <!-- Header & Navigasi Tab -->
+    <header class="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <div class="bg-custom-primary text-white p-2 rounded-xl font-bold text-xl tracking-wider">TD</div>
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900">ToDos<span class="text-custom-primary">App</span></h1>
+            </div>
+            <!-- Tab Navigation -->
+            <nav class="flex bg-gray-100 p-1.5 rounded-xl gap-1 w-full sm:w-auto justify-center">
+                <button data-target="expense" class="tab-btn flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900">Pengeluaran</button>
+                <button data-target="bookmark" class="tab-btn flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900">Bookmark</button>
+                <button data-target="quiz" class="tab-btn flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900">Kuis Interaktif</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Panels -->
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <!-- ================= PANEL 1: EXPENSE TRACKER ================= -->
+        <section id="panel-expense" class="tab-panel space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Catatan Pengeluaran Harian</h2>
+                    <p class="text-sm text-gray-500">Kelola pemasukan dan pengeluaran finansial Anda secara ringkas.</p>
+                </div>
+                <!-- Ringkasan Saldo -->
+                <div class="grid grid-cols-3 gap-3 w-full md:w-auto text-center">
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span class="block text-xs text-gray-400 font-medium">Pemasukan</span>
+                        <span id="total-income" class="text-sm md:text-base font-bold text-emerald-600">Rp 0</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span class="block text-xs text-gray-400 font-medium">Pengeluaran</span>
+                        <span id="total-expense" class="text-sm md:text-base font-bold text-rose-600">Rp 0</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span class="block text-xs text-gray-400 font-medium">Saldo</span>
+                        <span id="total-balance" class="text-sm md:text-base font-bold text-custom-primary">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Form Tambah Transaksi -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
+                    <h3 class="font-semibold text-gray-800 mb-4 text-base">Tambah Transaksi Baru</h3>
+                    <form id="form-expense" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Judul / Keterangan</label>
+                            <input type="text" id="exp-title" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3368A0]" placeholder="Contoh: Gaji Bulanan / Makan Siang">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Jumlah (Rp)</label>
+                                <input type="number" id="exp-amount" min="1" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3368A0]" placeholder="100000">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Tipe</label>
+                                <select id="exp-type" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3368A0]">
+                                    <option value="Pemasukan">Pemasukan</option>
+                                    <option value="Pengeluaran">Pengeluaran</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Kategori</label>
+                            <input type="text" id="exp-category" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3368A0]" placeholder="Contoh: Makanan, Transport, Gaji">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Tanggal</label>
+                            <input type="date" id="exp-date" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3368A0]">
+                        </div>
+                        <button type="submit" class="w-full py-2.5 bg-custom-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition cursor-pointer shadow-sm">Simpan Transaksi</button>
+                    </form>
+                </div>
+
+                <!-- Daftar Transaksi & Filter -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4">
+                        <h3 class="font-semibold text-gray-800 text-base">Riwayat Transaksi</h3>
+                        <!-- Filter & Search -->
+                        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <input type="text" id="exp-search" placeholder="Cari judul..." class="px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3368A0]">
+                            <select id="exp-filter-category" class="px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3368A0]">
+                                <option value="">Semua Kategori</option>
+                            </select>
+                            <select id="exp-filter-type" class="px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3368A0]">
+                                <option value="">Semua Tipe</option>
+                                <option value="Pemasukan">Pemasukan</option>
+                                <option value="Pengeluaran">Pengeluaran</option>
+                            </select>
+                            <select id="exp-sort" class="px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3368A0]">
+                                <option value="newest">Terbaru</option>
+                                <option value="oldest">Terlama</option>
+                                <option value="highest">Jumlah Terbesar</option>
+                                <option value="lowest">Jumlah Terkecil</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Tabel / List Container -->
+                    <div class="overflow-x-auto flex-grow">
+                        <div id="expense-list" class="space-y-3">
+                            <!-- Data akan di-render secara dinamis via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PANEL 2: BOOKMARK MANAGER ================= -->
+        <section id="panel-bookmark" class="tab-panel hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Bookmark & Link Manager</h2>
+                    <p class="text-sm text-gray-500">Simpan dan atur tautan favorit Anda dengan mudah dan aman.</p>
+                </div>
+                <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                    <input type="text" id="bm-search" placeholder="Cari nama / URL / tag..." class="px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#3368A0]">
+                    <select id="bm-sort" class="px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#3368A0]">
+                        <option value="az">Judul A - Z</option>
+                        <option value="za">Judul Z - A</option>
+                        <option value="newest">Terbaru</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Form Tambah Bookmark -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
+                    <h3 class="font-semibold text-gray-800 mb-4 text-base">Tambah Tautan Baru</h3>
+                    <form id="form-bookmark" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Nama / Judul Tautan</label>
+                            <input type="text" id="bm-title" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3368A0]" placeholder="Contoh: Dokumentasi Tailwind">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">URL (Harus berawalan http:// / https://)</label>
+                            <input type="text" id="bm-url" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3368A0]" placeholder="https://tailwindcss.com">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Kategori / Tag</label>
+                            <input type="text" id="bm-category" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3368A0]" placeholder="Contoh: Programming, Referensi">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Catatan Singkat (Opsional)</label>
+                            <textarea id="bm-notes" rows="2" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3368A0]" placeholder="Catatan tambahan..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full py-2.5 bg-custom-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition cursor-pointer shadow-sm">Simpan Bookmark</button>
+                    </form>
+                </div>
+
+                <!-- Daftar Bookmark -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-semibold text-gray-800 mb-4 text-base">Daftar Tautan Tersimpan</h3>
+                    <div id="bookmark-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Data bookmark akan di-render secara dinamis -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PANEL 3: KUIS INTERAKTIF ================= -->
+        <section id="panel-quiz" class="tab-panel hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Kuis Interaktif Pemrograman Dasar</h2>
+                    <p class="text-sm text-gray-500">Uji pengetahuan logika dasar, HTML, CSS, dan JavaScript Anda.</p>
+                </div>
+                <div class="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 text-center">
+                    <span class="block text-xs text-gray-400 font-medium">High Score Terbaik</span>
+                    <span id="quiz-highscore" class="text-lg font-bold text-custom-primary">0 / 5</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-2xl mx-auto">
+                <!-- State 1: Start Screen -->
+                <div id="quiz-start-screen" class="text-center py-8 space-y-4">
+                    <div class="bg-[#3368A0]/10 text-custom-primary w-16 h-16 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold">?</div>
+                    <h3 class="text-xl font-bold text-gray-800">Siap Menguji Kemampuan Anda?</h3>
+                    <p class="text-sm text-gray-500 max-w-md mx-auto">Kuis ini terdiri dari 5 pertanyaan pilihan ganda seputar teknologi web dan dasar logika pemrograman. Dapatkan skor maksimal!</p>
+                    <button id="btn-start-quiz" class="px-6 py-3 bg-custom-primary text-white font-semibold text-sm rounded-xl hover:opacity-90 transition cursor-pointer shadow-sm">Mulai Kuis Sekarang</button>
+                </div>
+
+                <!-- State 2: Question Screen -->
+                <div id="quiz-question-screen" class="hidden space-y-6">
+                    <div class="flex justify-between items-center text-xs text-gray-400 font-medium border-b border-gray-100 pb-3">
+                        <span id="quiz-progress-text">Soal 1 dari 5</span>
+                        <span id="quiz-timer" class="text-custom-primary font-semibold">Waktu: 15s</span>
+                    </div>
+                    <div>
+                        <h3 id="quiz-question-title" class="text-lg font-semibold text-gray-800 mb-4">Pertanyaan kuis akan muncul di sini?</h3>
+                        <div id="quiz-options-container" class="space-y-3">
+                            <!-- Opsi pilihan ganda di-render secara dinamis -->
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button id="btn-next-question" class="hidden px-5 py-2.5 bg-custom-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition cursor-pointer">Selanjutnya</button>
+                    </div>
+                </div>
+
+                <!-- State 3: Result Screen -->
+                <div id="quiz-result-screen" class="hidden text-center py-8 space-y-4">
+                    <div class="bg-emerald-50 text-emerald-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
+                    <h3 class="text-xl font-bold text-gray-800">Kuis Selesai!</h3>
+                    <p class="text-sm text-gray-500">Skor akhir Anda:</p>
+                    <div id="quiz-final-score" class="text-4xl font-extrabold text-custom-primary">4 / 5</div>
+                    <p id="quiz-feedback-msg" class="text-sm font-medium text-gray-600">Kerja bagus! Pertahankan prestasi Anda.</p>
+                    <div class="pt-4">
+                        <button id="btn-restart-quiz" class="px-6 py-3 bg-custom-primary text-white font-semibold text-sm rounded-xl hover:opacity-90 transition cursor-pointer shadow-sm">Ulangi Kuis</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Universal untuk Edit / Hapus (Konsisten) -->
+    <div id="app-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div id="modal-content-box" class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in duration-200">
+            <!-- Konten modal akan diisi secara dinamis oleh JavaScript -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-gray-500">
+            &copy; 2026 ToDos App &bull; Dibuat dengan semangat produktivitas tinggi.
+        </div>
+    </footer>
+
+    <!-- Eksternal JavaScript Sesuai Ketentuan -->
+    <script src="assets/script.js" defer></script>
+</body>
+</html>
