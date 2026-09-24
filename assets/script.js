@@ -69,9 +69,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // section can be shared/bookmarked without persisting UI state in storage.
   const tabs = $$(".tab-btn");
   const panels = $$(".tab-panel");
-  const tabNames = new Set(["expense", "bookmark", "quiz"]);
   function switchTab(name) {
-    if (!tabNames.has(name)) name = "expense";
+    if (!["expense", "bookmark", "quiz"].includes(name)) name = "expense";
     if (name !== "quiz") stopQuizTimer();
     panels.forEach((panel) =>
       panel.classList.toggle("hidden", panel.id !== `panel-${name}`),
@@ -97,15 +96,9 @@ document.addEventListener("DOMContentLoaded", () => {
       window.history.replaceState(null, "", url);
     }),
   );
-  // Normalize the URL so it matches the visible fallback tab.
-  const initialUrl = new URL(window.location.href);
-  const requestedTab = initialUrl.searchParams.get("tab");
-  const initialTab = tabNames.has(requestedTab) ? requestedTab : "expense";
-  switchTab(initialTab);
-  if (requestedTab !== initialTab) {
-    initialUrl.searchParams.set("tab", initialTab);
-    window.history.replaceState(null, "", initialUrl);
-  }
+  // Read the requested tab once at startup; switchTab falls back to expense
+  // when the query parameter is missing or contains an unsupported value.
+  switchTab(new URLSearchParams(window.location.search).get("tab"));
 
   // Shared accessible modal.
   const modal = $("#app-modal");
@@ -606,25 +599,14 @@ document.addEventListener("DOMContentLoaded", () => {
     seconds = 15;
     $("#quiz-timer").textContent = `Waktu: ${seconds}s`;
     timer = setInterval(() => {
-      if (answered) {
-        stopQuizTimer();
-        return;
-      }
-      if (seconds <= 1) {
-        seconds = 0;
-        $("#quiz-timer").textContent = "Waktu habis";
-        stopQuizTimer();
-        answerQuestion(-1);
-        return;
-      }
       seconds -= 1;
       $("#quiz-timer").textContent = `Waktu: ${seconds}s`;
+      if (seconds <= 0) answerQuestion(-1);
     }, 1000);
   }
   function answerQuestion(selected) {
     if (answered) return;
     answered = true;
-
     stopQuizTimer();
     const correct = questions[questionIndex].answer;
     $$("#quiz-options-container button").forEach((button, index) => {
@@ -649,7 +631,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   $("#btn-next-question").addEventListener("click", () => {
     questionIndex += 1;
-
     if (questionIndex < questions.length) showQuestion();
     else finishQuiz();
   });
