@@ -66,11 +66,33 @@ document.addEventListener('DOMContentLoaded', () => {
     function bindCancel() { $('#modal-cancel')?.addEventListener('click', closeModal); }
     // Reuse the shared frame and action buttons for both record-edit forms.
     function showEditForm(title, formId, fields) {
-        showModal(`<h3 class="font-bold text-gray-800">${title}</h3><form id="${formId}" class="space-y-3">${fields}<div class="flex justify-end gap-2"><button type="button" id="modal-cancel" class="px-4 py-2 bg-gray-100 rounded-xl">Batal</button><button class="px-4 py-2 bg-custom-primary text-white rounded-xl">Simpan</button></div></form>`);
+        showModal(`
+            <h3 class="font-bold text-gray-800">${title}</h3>
+            <form id="${formId}" class="space-y-3" novalidate>
+                ${fields}
+                <p id="edit-form-error" class="hidden text-sm text-rose-600" role="alert"></p>
+                <div class="flex justify-end gap-2">
+                    <button type="button" id="modal-cancel" class="px-4 py-2 bg-gray-100 rounded-xl">Batal</button>
+                    <button class="px-4 py-2 bg-custom-primary text-white rounded-xl">Simpan</button>
+                </div>
+            </form>
+        `);
         bindCancel();
     }
+    function showEditError(message) {
+        const error = $('#edit-form-error');
+        error.textContent = message;
+        error.classList.remove('hidden');
+    }
     function confirmDelete(message, action) {
-        showModal(`<h3 class="font-bold text-gray-800">Konfirmasi Hapus</h3><p class="text-sm text-gray-500">${message}</p><div class="flex justify-end gap-2"><button type="button" id="modal-cancel" class="px-4 py-2 bg-gray-100 rounded-xl">Batal</button><button type="button" id="modal-confirm-del" class="px-4 py-2 bg-rose-600 text-white rounded-xl">Hapus</button></div>`);
+        showModal(`
+            <h3 class="font-bold text-gray-800">Konfirmasi Hapus</h3>
+            <p class="text-sm text-gray-500">${message}</p>
+            <div class="flex justify-end gap-2">
+                <button type="button" id="modal-cancel" class="px-4 py-2 bg-gray-100 rounded-xl">Batal</button>
+                <button type="button" id="modal-confirm-del" class="px-4 py-2 bg-rose-600 text-white rounded-xl">Hapus</button>
+            </div>
+        `);
         bindCancel();
         $('#modal-confirm-del').addEventListener('click', () => { action(); closeModal(); });
     }
@@ -116,7 +138,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('div');
             row.className = 'flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-gray-50 border border-gray-100 rounded-xl';
             const incomeItem = item.type === 'Pemasukan';
-            row.innerHTML = `<div><div class="flex items-center gap-2"><span class="font-semibold text-gray-800 text-sm">${escapeHtml(item.title)}</span><span class="text-xs ${incomeItem ? 'text-emerald-600' : 'text-rose-600'}">${escapeHtml(item.type)}</span></div><div class="text-xs text-gray-400">${escapeHtml(item.category)} · ${escapeHtml(item.date)}</div></div><div class="flex items-center justify-between sm:justify-end gap-3"><strong class="text-sm ${incomeItem ? 'text-emerald-600' : 'text-rose-600'}">${incomeItem ? '+' : '−'} ${rupiah(item.amount)}</strong><button class="btn-edit-exp text-sm text-blue-600" data-id="${escapeHtml(item.id)}">Ubah</button><button class="btn-del-exp text-sm text-rose-600" data-id="${escapeHtml(item.id)}">Hapus</button></div>`;
+            row.innerHTML = `
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-semibold text-gray-800 text-sm">${escapeHtml(item.title)}</span>
+                        <span class="text-xs ${incomeItem ? 'text-emerald-600' : 'text-rose-600'}">${escapeHtml(item.type)}</span>
+                    </div>
+                    <div class="text-xs text-gray-400">${escapeHtml(item.category)} &middot; ${escapeHtml(item.date)}</div>
+                </div>
+                <div class="flex items-center justify-between sm:justify-end gap-3">
+                    <strong class="text-sm ${incomeItem ? 'text-emerald-600' : 'text-rose-600'}">${incomeItem ? '+' : '-'} ${rupiah(item.amount)}</strong>
+                    <button class="btn-edit-exp text-sm text-blue-600" data-id="${escapeHtml(item.id)}">Ubah</button>
+                    <button class="btn-del-exp text-sm text-rose-600" data-id="${escapeHtml(item.id)}">Hapus</button>
+                </div>
+            `;
             expenseList.appendChild(row);
         });
         $$('.btn-edit-exp', expenseList).forEach(button => button.addEventListener('click', () => editExpense(button.dataset.id)));
@@ -130,8 +165,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     function editExpense(id) {
         const item = expenses.find(entry => String(entry.id) === String(id)); if (!item) return;
-        showEditForm('Ubah Transaksi', 'edit-exp-form', `<label class="block text-sm">Judul<input id="edit-exp-title" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.title)}"></label><label class="block text-sm">Jumlah<input id="edit-exp-amount" type="number" min="1" class="mt-1 w-full border rounded-xl p-2" required value="${Number(item.amount)}"></label><label class="block text-sm">Tipe<select id="edit-exp-type" class="mt-1 w-full border rounded-xl p-2"><option ${item.type === 'Pemasukan' ? 'selected' : ''}>Pemasukan</option><option ${item.type === 'Pengeluaran' ? 'selected' : ''}>Pengeluaran</option></select></label><label class="block text-sm">Kategori<input id="edit-exp-category" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.category)}"></label><label class="block text-sm">Tanggal<input id="edit-exp-date" type="date" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.date)}"></label>`);
-        $('#edit-exp-form').addEventListener('submit', event => { event.preventDefault(); item.title = $('#edit-exp-title').value.trim(); item.amount = Number($('#edit-exp-amount').value); item.type = $('#edit-exp-type').value; item.category = $('#edit-exp-category').value.trim(); item.date = $('#edit-exp-date').value; if (!item.title || !item.category || !item.date || !Number.isFinite(item.amount) || item.amount <= 0) return; saveExpenses(); renderExpenses(); closeModal(); });
+        const fields = `
+            <label class="block text-sm">Judul
+                <input id="edit-exp-title" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.title)}">
+            </label>
+            <label class="block text-sm">Jumlah
+                <input id="edit-exp-amount" type="number" min="1" class="mt-1 w-full border rounded-xl p-2" required value="${Number(item.amount)}">
+            </label>
+            <label class="block text-sm">Tipe
+                <select id="edit-exp-type" class="mt-1 w-full border rounded-xl p-2">
+                    <option ${item.type === 'Pemasukan' ? 'selected' : ''}>Pemasukan</option>
+                    <option ${item.type === 'Pengeluaran' ? 'selected' : ''}>Pengeluaran</option>
+                </select>
+            </label>
+            <label class="block text-sm">Kategori
+                <input id="edit-exp-category" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.category)}">
+            </label>
+            <label class="block text-sm">Tanggal
+                <input id="edit-exp-date" type="date" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.date)}">
+            </label>
+        `;
+        showEditForm('Ubah Transaksi', 'edit-exp-form', fields);
+        $('#edit-exp-form').addEventListener('submit', event => {
+            event.preventDefault();
+            item.title = $('#edit-exp-title').value.trim();
+            item.amount = Number($('#edit-exp-amount').value);
+            item.type = $('#edit-exp-type').value;
+            item.category = $('#edit-exp-category').value.trim();
+            item.date = $('#edit-exp-date').value;
+            if (!item.title || !item.category || !item.date || !Number.isFinite(item.amount) || item.amount <= 0) {
+                showEditError('Lengkapi judul, kategori, dan tanggal. Jumlah harus berupa angka lebih dari 0.');
+                return;
+            }
+            saveExpenses();
+            renderExpenses();
+            closeModal();
+        });
     }
     ['input', 'change'].forEach(type => { $('#exp-search').addEventListener(type, renderExpenses); $('#exp-filter-type').addEventListener(type, renderExpenses); categoryFilter.addEventListener(type, renderExpenses); $('#exp-sort').addEventListener(type, renderExpenses); });
 
@@ -151,7 +220,18 @@ document.addEventListener('DOMContentLoaded', () => {
         list.forEach(item => {
             const card = document.createElement('article'); card.className = 'bg-gray-50 border border-gray-100 p-4 rounded-xl space-y-3';
             const safeUrl = validUrl(item.url) ? escapeHtml(item.url) : '#';
-            card.innerHTML = `<div class="flex justify-between gap-2"><h4 class="font-semibold text-gray-800 text-sm">${escapeHtml(item.title)}</h4><span class="text-xs text-gray-500">${escapeHtml(item.category)}</span></div><a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-custom-primary hover:underline block break-all">${escapeHtml(item.url)}</a>${item.notes ? `<p class="text-xs text-gray-500">${escapeHtml(item.notes)}</p>` : ''}<div class="flex justify-end gap-3 border-t pt-2"><button class="edit-bookmark text-sm text-blue-600" data-id="${escapeHtml(item.id)}">Ubah</button><button class="delete-bookmark text-sm text-rose-600" data-id="${escapeHtml(item.id)}">Hapus</button></div>`;
+            card.innerHTML = `
+                <div class="flex justify-between gap-2">
+                    <h4 class="font-semibold text-gray-800 text-sm">${escapeHtml(item.title)}</h4>
+                    <span class="text-xs text-gray-500">${escapeHtml(item.category)}</span>
+                </div>
+                <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-custom-primary hover:underline block break-all">${escapeHtml(item.url)}</a>
+                ${item.notes ? `<p class="text-xs text-gray-500">${escapeHtml(item.notes)}</p>` : ''}
+                <div class="flex justify-end gap-3 border-t pt-2">
+                    <button class="edit-bookmark text-sm text-blue-600" data-id="${escapeHtml(item.id)}">Ubah</button>
+                    <button class="delete-bookmark text-sm text-rose-600" data-id="${escapeHtml(item.id)}">Hapus</button>
+                </div>
+            `;
             container.appendChild(card);
         });
         $$('.edit-bookmark', container).forEach(button => button.addEventListener('click', () => editBookmark(button.dataset.id)));
@@ -165,8 +245,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     function editBookmark(id) {
         const item = bookmarks.find(entry => String(entry.id) === String(id)); if (!item) return;
-        showEditForm('Ubah Tautan Bookmark', 'edit-bookmark-form', `<label class="block text-sm">Judul<input id="edit-bm-title" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.title)}"></label><label class="block text-sm">URL<input id="edit-bm-url" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.url)}"></label><label class="block text-sm">Kategori<input id="edit-bm-category" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.category)}"></label><label class="block text-sm">Catatan<textarea id="edit-bm-notes" class="mt-1 w-full border rounded-xl p-2">${escapeHtml(item.notes)}</textarea></label>`);
-        $('#edit-bookmark-form').addEventListener('submit', event => { event.preventDefault(); const url = $('#edit-bm-url').value.trim(); if (!validUrl(url)) { $('#edit-bm-url').setCustomValidity('URL harus menggunakan http:// atau https://'); $('#edit-bm-url').reportValidity(); $('#edit-bm-url').setCustomValidity(''); return; } item.title = $('#edit-bm-title').value.trim(); item.url = url; item.category = $('#edit-bm-category').value.trim(); item.notes = $('#edit-bm-notes').value.trim(); saveBookmarks(); renderBookmarks(); closeModal(); });
+        const fields = `
+            <label class="block text-sm">Judul
+                <input id="edit-bm-title" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.title)}">
+            </label>
+            <label class="block text-sm">URL
+                <input id="edit-bm-url" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.url)}">
+            </label>
+            <label class="block text-sm">Kategori
+                <input id="edit-bm-category" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.category)}">
+            </label>
+            <label class="block text-sm">Catatan
+                <textarea id="edit-bm-notes" class="mt-1 w-full border rounded-xl p-2">${escapeHtml(item.notes)}</textarea>
+            </label>
+        `;
+        showEditForm('Ubah Tautan Bookmark', 'edit-bookmark-form', fields);
+        $('#edit-bookmark-form').addEventListener('submit', event => {
+            event.preventDefault();
+            const title = $('#edit-bm-title').value.trim();
+            const url = $('#edit-bm-url').value.trim();
+            const category = $('#edit-bm-category').value.trim();
+            if (!title || !category) {
+                showEditError('Judul dan kategori bookmark wajib diisi.');
+                return;
+            }
+            if (!validUrl(url)) {
+                showEditError('URL tidak valid. Masukkan alamat yang diawali http:// atau https://.');
+                return;
+            }
+            item.title = title;
+            item.url = url;
+            item.category = category;
+            item.notes = $('#edit-bm-notes').value.trim();
+            saveBookmarks();
+            renderBookmarks();
+            closeModal();
+        });
     }
     $('#bm-search').addEventListener('input', renderBookmarks); $('#bm-sort').addEventListener('change', renderBookmarks);
 
