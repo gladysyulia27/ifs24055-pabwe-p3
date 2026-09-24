@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const $$ = (selector, root = document) => [
     ...root.querySelectorAll(selector),
   ];
-  let stopQuizTimer = () => {};
+  let timer = null;
   let notificationTimer = null;
   function notifyStorageFailure() {
     let notification = $("#storage-notification");
@@ -511,215 +511,174 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#bm-search").addEventListener("input", renderBookmarks);
   $("#bm-sort").addEventListener("change", renderBookmarks);
 
-  function initializeQuiz(dependencies) {
-    const $ = dependencies.query;
-    const $$ = dependencies.queryAll;
-    const { storage, notifyStorageFailure, escapeHtml } = dependencies;
-    let timer = null;
-    // Five-question technology quiz.
-    const questions = [
-      {
-        question: "Apa fungsi elemen semantic <nav> pada HTML5?",
-        options: [
-          "Membuat garis horizontal",
-          "Menampung navigasi tautan situs",
-          "Mengatur warna latar",
-          "Menyimpan data database",
-        ],
-        answer: 1,
-      },
-      {
-        question: "Properti CSS apa yang mengaktifkan tata letak Flexbox?",
-        options: [
-          "display: grid",
-          "display: flex",
-          "position: absolute",
-          "float: left",
-        ],
-        answer: 1,
-      },
-      {
-        question:
-          "Metode apa yang mengubah objek JavaScript menjadi string JSON?",
-        options: [
-          "JSON.parse()",
-          "JSON.stringify()",
-          "localStorage.getItem()",
-          "Array.map()",
-        ],
-        answer: 1,
-      },
-      {
-        question: "Ekstensi apa yang umum dipakai untuk dokumen HTML?",
-        options: [".js", ".css", ".html", ".json"],
-        answer: 2,
-      },
-      {
-        question:
-          "Keyword mana yang mendeklarasikan variabel yang nilainya bisa diubah?",
-        options: ["const", "let", "static", "define"],
-        answer: 1,
-      },
-    ];
-    let questionIndex = 0,
-      score = 0,
-      seconds = 15,
-      answered = false;
-    function stopTimer() {
-      if (timer !== null) {
-        clearInterval(timer);
-        timer = null;
-      }
+  // Five-question technology quiz.
+  const questions = [
+    {
+      question: "Apa fungsi elemen semantic <nav> pada HTML5?",
+      options: [
+        "Membuat garis horizontal",
+        "Menampung navigasi tautan situs",
+        "Mengatur warna latar",
+        "Menyimpan data database",
+      ],
+      answer: 1,
+    },
+    {
+      question: "Properti CSS apa yang mengaktifkan tata letak Flexbox?",
+      options: [
+        "display: grid",
+        "display: flex",
+        "position: absolute",
+        "float: left",
+      ],
+      answer: 1,
+    },
+    {
+      question:
+        "Metode apa yang mengubah objek JavaScript menjadi string JSON?",
+      options: [
+        "JSON.parse()",
+        "JSON.stringify()",
+        "localStorage.getItem()",
+        "Array.map()",
+      ],
+      answer: 1,
+    },
+    {
+      question: "Ekstensi apa yang umum dipakai untuk dokumen HTML?",
+      options: [".js", ".css", ".html", ".json"],
+      answer: 2,
+    },
+    {
+      question:
+        "Keyword mana yang mendeklarasikan variabel yang nilainya bisa diubah?",
+      options: ["const", "let", "static", "define"],
+      answer: 1,
+    },
+  ];
+  let questionIndex = 0,
+    score = 0,
+    seconds = 15,
+    answered = false;
+  function stopQuizTimer() {
+    if (timer !== null) {
+      clearInterval(timer);
+      timer = null;
     }
-    const startScreen = $("#quiz-start-screen"),
-      questionScreen = $("#quiz-question-screen"),
-      resultScreen = $("#quiz-result-screen");
-    const highScoreKey = "todos_quiz_highscore";
-    function normalizeHighScore(value) {
-      let score;
-      let total;
-      if (value && typeof value === "object") {
-        ({ score, total } = value);
-      } else if (typeof value === "string") {
-        const legacy = value.match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/);
-        if (legacy) [, score, total] = legacy.map(Number);
-      }
-      if (
-        !Number.isInteger(score) ||
-        !Number.isInteger(total) ||
-        total <= 0 ||
-        score < 0 ||
-        score > total
-      ) {
-        return { score: 0, total: questions.length };
-      }
-      return { score, total };
-    }
-    function readHighScore() {
-      const stored = storage.get(highScoreKey, null);
-      const highScore = normalizeHighScore(stored);
-      if (
-        stored !== null &&
-        (typeof stored !== "object" || stored.score !== highScore.score || stored.total !== highScore.total)
-      ) {
-        if (!storage.set(highScoreKey, highScore)) notifyStorageFailure();
-      }
-      return highScore;
-    }
-    function loadHighScore() {
-      const highScore = readHighScore();
-      $("#quiz-highscore").textContent = `${highScore.score} / ${highScore.total}`;
-    }
-    function startQuiz() {
-      stopTimer();
-      questionIndex = 0;
-      score = 0;
-      startScreen.classList.add("hidden");
-      resultScreen.classList.add("hidden");
-      questionScreen.classList.remove("hidden");
-      showQuestion();
-    }
-    function showQuestion() {
-      answered = false;
-      $("#btn-next-question").classList.add("hidden");
-      const question = questions[questionIndex];
-      $("#quiz-progress-text").textContent =
-        `Soal ${questionIndex + 1} dari ${questions.length}`;
-      $("#quiz-question-title").textContent = question.question;
-      const options = $("#quiz-options-container");
-      options.replaceChildren();
-      question.options.forEach((option, index) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className =
-          "w-full text-left px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-100";
-        button.innerHTML = `<span>${escapeHtml(option)}</span><span class="float-right text-xs text-gray-400">Pilihan ${String.fromCharCode(65 + index)}</span>`;
-        button.addEventListener("click", () => answerQuestion(index));
-        options.appendChild(button);
-      });
-      stopTimer();
-      seconds = 15;
-      $("#quiz-timer").textContent = `Waktu: ${seconds}s`;
-      timer = setInterval(() => {
-        if (answered) {
-          stopTimer();
-          return;
-        }
-        if (seconds <= 1) {
-          seconds = 0;
-          $("#quiz-timer").textContent = "Waktu habis";
-          stopTimer();
-          answerQuestion(-1);
-          return;
-        }
-        seconds -= 1;
-        $("#quiz-timer").textContent = `Waktu: ${seconds}s`;
-      }, 1000);
-    }
-    function answerQuestion(selected) {
-      if (answered) return;
-      answered = true;
-
-      stopTimer();
-      const correct = questions[questionIndex].answer;
-      $$("#quiz-options-container button").forEach((button, index) => {
-        button.disabled = true;
-        if (index === correct)
-          button.classList.add(
-            "bg-emerald-50",
-            "border-emerald-500",
-            "text-emerald-700",
-          );
-        else if (index === selected)
-          button.classList.add("bg-rose-50", "border-rose-500", "text-rose-700");
-      });
-      if (selected === correct) score += 1;
-      $("#quiz-feedback-msg").textContent =
-        selected < 0
-          ? "Waktu habis. Jawaban yang benar ditandai hijau."
-          : selected === correct
-            ? "Benar! Jawaban Anda tepat."
-            : "Belum tepat. Jawaban yang benar ditandai hijau.";
-      $("#btn-next-question").classList.remove("hidden");
-    }
-    $("#btn-next-question").addEventListener("click", () => {
-      questionIndex += 1;
-
-      if (questionIndex < questions.length) showQuestion();
-      else finishQuiz();
-    });
-    function finishQuiz() {
-      stopTimer();
-      questionScreen.classList.add("hidden");
-      resultScreen.classList.remove("hidden");
-      $("#quiz-final-score").textContent = `${score} / ${questions.length}`;
-      $("#quiz-feedback-msg").textContent =
-        score === questions.length
-          ? "Luar biasa! Semua jawaban benar."
-          : score >= 3
-            ? "Kerja bagus! Pemahaman Anda sudah cukup baik."
-            : "Terus berlatih dan pelajari kembali materinya!";
-      const previous = readHighScore();
-      if (score > previous.score) {
-        if (!storage.set(highScoreKey, { score, total: questions.length }))
-          notifyStorageFailure();
-      }
-      loadHighScore();
-    }
-    $("#btn-start-quiz").addEventListener("click", startQuiz);
-    $("#btn-restart-quiz").addEventListener("click", startQuiz);
-
-    loadHighScore();
-    return stopTimer;
   }
-  stopQuizTimer = initializeQuiz({
-    query: $,
-    queryAll: $$,
-    storage,
-    notifyStorageFailure,
-    escapeHtml,
+  const startScreen = $("#quiz-start-screen"),
+    questionScreen = $("#quiz-question-screen"),
+    resultScreen = $("#quiz-result-screen");
+  function loadHighScore() {
+    $("#quiz-highscore").textContent = storage.get(
+      "todos_quiz_highscore",
+      "0 / 5",
+    );
+  }
+  function startQuiz() {
+    stopQuizTimer();
+    questionIndex = 0;
+    score = 0;
+    startScreen.classList.add("hidden");
+    resultScreen.classList.add("hidden");
+    questionScreen.classList.remove("hidden");
+    showQuestion();
+  }
+  function showQuestion() {
+    answered = false;
+    $("#btn-next-question").classList.add("hidden");
+    const question = questions[questionIndex];
+    $("#quiz-progress-text").textContent =
+      `Soal ${questionIndex + 1} dari ${questions.length}`;
+    $("#quiz-question-title").textContent = question.question;
+    const options = $("#quiz-options-container");
+    options.replaceChildren();
+    question.options.forEach((option, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className =
+        "w-full text-left px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-100";
+      button.innerHTML = `<span>${escapeHtml(option)}</span><span class="float-right text-xs text-gray-400">Pilihan ${String.fromCharCode(65 + index)}</span>`;
+      button.addEventListener("click", () => answerQuestion(index));
+      options.appendChild(button);
+    });
+    stopQuizTimer();
+    seconds = 15;
+    $("#quiz-timer").textContent = `Waktu: ${seconds}s`;
+    timer = setInterval(() => {
+      if (answered) {
+        stopQuizTimer();
+        return;
+      }
+      if (seconds <= 1) {
+        seconds = 0;
+        $("#quiz-timer").textContent = "Waktu habis";
+        stopQuizTimer();
+        answerQuestion(-1);
+        return;
+      }
+      seconds -= 1;
+      $("#quiz-timer").textContent = `Waktu: ${seconds}s`;
+    }, 1000);
+  }
+  function answerQuestion(selected) {
+    if (answered) return;
+    answered = true;
+
+    stopQuizTimer();
+    const correct = questions[questionIndex].answer;
+    $$("#quiz-options-container button").forEach((button, index) => {
+      button.disabled = true;
+      if (index === correct)
+        button.classList.add(
+          "bg-emerald-50",
+          "border-emerald-500",
+          "text-emerald-700",
+        );
+      else if (index === selected)
+        button.classList.add("bg-rose-50", "border-rose-500", "text-rose-700");
+    });
+    if (selected === correct) score += 1;
+    $("#quiz-feedback-msg").textContent =
+      selected < 0
+        ? "Waktu habis. Jawaban yang benar ditandai hijau."
+        : selected === correct
+          ? "Benar! Jawaban Anda tepat."
+          : "Belum tepat. Jawaban yang benar ditandai hijau.";
+    $("#btn-next-question").classList.remove("hidden");
+  }
+  $("#btn-next-question").addEventListener("click", () => {
+    questionIndex += 1;
+
+    if (questionIndex < questions.length) showQuestion();
+    else finishQuiz();
   });
+  function finishQuiz() {
+    stopQuizTimer();
+    questionScreen.classList.add("hidden");
+    resultScreen.classList.remove("hidden");
+    $("#quiz-final-score").textContent = `${score} / ${questions.length}`;
+    $("#quiz-feedback-msg").textContent =
+      score === questions.length
+        ? "Luar biasa! Semua jawaban benar."
+        : score >= 3
+          ? "Kerja bagus! Pemahaman Anda sudah cukup baik."
+          : "Terus berlatih dan pelajari kembali materinya!";
+    const previous =
+      Number(
+        String(storage.get("todos_quiz_highscore", "0 / 5")).split("/")[0],
+      ) || 0;
+    if (
+      score > previous &&
+      !storage.set("todos_quiz_highscore", `${score} / ${questions.length}`)
+    )
+      notifyStorageFailure();
+    loadHighScore();
+  }
+  $("#btn-start-quiz").addEventListener("click", startQuiz);
+  $("#btn-restart-quiz").addEventListener("click", startQuiz);
 
   renderExpenses();
   renderBookmarks();
+  loadHighScore();
 });
