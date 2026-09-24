@@ -19,7 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     };
 
-    // Tab navigation and saved tab.
+    // Tab navigation is driven by the `tab` query parameter so the selected
+    // section can be shared/bookmarked without persisting UI state in storage.
     const tabs = $$('.tab-btn');
     const panels = $$('.tab-panel');
     function switchTab(name) {
@@ -33,10 +34,20 @@ document.addEventListener('DOMContentLoaded', () => {
             tab.classList.toggle('text-gray-600', !active);
             tab.setAttribute('aria-selected', String(active));
         });
-        storage.set('todos_active_tab', name);
     }
-    tabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.target)));
-    switchTab(storage.get('todos_active_tab', 'expense'));
+    tabs.forEach(tab => tab.addEventListener('click', () => {
+        const name = tab.dataset.target;
+        switchTab(name);
+
+        // Keep the current path and other query parameters while updating the
+        // selected tab in-place, without adding a new browser-history entry.
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', name);
+        window.history.replaceState(null, '', url);
+    }));
+    // Read the requested tab once at startup; switchTab falls back to expense
+    // when the query parameter is missing or contains an unsupported value.
+    switchTab(new URLSearchParams(window.location.search).get('tab'));
 
     // Shared accessible modal.
     const modal = $('#app-modal');
@@ -53,6 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
     function bindCancel() { $('#modal-cancel')?.addEventListener('click', closeModal); }
+    // Reuse the shared frame and action buttons for both record-edit forms.
+    function showEditForm(title, formId, fields) {
+        showModal(`<h3 class="font-bold text-gray-800">${title}</h3><form id="${formId}" class="space-y-3">${fields}<div class="flex justify-end gap-2"><button type="button" id="modal-cancel" class="px-4 py-2 bg-gray-100 rounded-xl">Batal</button><button class="px-4 py-2 bg-custom-primary text-white rounded-xl">Simpan</button></div></form>`);
+        bindCancel();
+    }
     function confirmDelete(message, action) {
         showModal(`<h3 class="font-bold text-gray-800">Konfirmasi Hapus</h3><p class="text-sm text-gray-500">${message}</p><div class="flex justify-end gap-2"><button type="button" id="modal-cancel" class="px-4 py-2 bg-gray-100 rounded-xl">Batal</button><button type="button" id="modal-confirm-del" class="px-4 py-2 bg-rose-600 text-white rounded-xl">Hapus</button></div>`);
         bindCancel();
@@ -114,8 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     function editExpense(id) {
         const item = expenses.find(entry => String(entry.id) === String(id)); if (!item) return;
-        showModal(`<h3 class="font-bold text-gray-800">Ubah Transaksi</h3><form id="edit-exp-form" class="space-y-3"><label class="block text-sm">Judul<input id="edit-exp-title" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.title)}"></label><label class="block text-sm">Jumlah<input id="edit-exp-amount" type="number" min="1" class="mt-1 w-full border rounded-xl p-2" required value="${Number(item.amount)}"></label><label class="block text-sm">Tipe<select id="edit-exp-type" class="mt-1 w-full border rounded-xl p-2"><option ${item.type === 'Pemasukan' ? 'selected' : ''}>Pemasukan</option><option ${item.type === 'Pengeluaran' ? 'selected' : ''}>Pengeluaran</option></select></label><label class="block text-sm">Kategori<input id="edit-exp-category" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.category)}"></label><label class="block text-sm">Tanggal<input id="edit-exp-date" type="date" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.date)}"></label><div class="flex justify-end gap-2"><button type="button" id="modal-cancel" class="px-4 py-2 bg-gray-100 rounded-xl">Batal</button><button class="px-4 py-2 bg-custom-primary text-white rounded-xl">Simpan</button></div></form>`);
-        bindCancel();
+        showEditForm('Ubah Transaksi', 'edit-exp-form', `<label class="block text-sm">Judul<input id="edit-exp-title" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.title)}"></label><label class="block text-sm">Jumlah<input id="edit-exp-amount" type="number" min="1" class="mt-1 w-full border rounded-xl p-2" required value="${Number(item.amount)}"></label><label class="block text-sm">Tipe<select id="edit-exp-type" class="mt-1 w-full border rounded-xl p-2"><option ${item.type === 'Pemasukan' ? 'selected' : ''}>Pemasukan</option><option ${item.type === 'Pengeluaran' ? 'selected' : ''}>Pengeluaran</option></select></label><label class="block text-sm">Kategori<input id="edit-exp-category" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.category)}"></label><label class="block text-sm">Tanggal<input id="edit-exp-date" type="date" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.date)}"></label>`);
         $('#edit-exp-form').addEventListener('submit', event => { event.preventDefault(); item.title = $('#edit-exp-title').value.trim(); item.amount = Number($('#edit-exp-amount').value); item.type = $('#edit-exp-type').value; item.category = $('#edit-exp-category').value.trim(); item.date = $('#edit-exp-date').value; if (!item.title || !item.category || !item.date || !Number.isFinite(item.amount) || item.amount <= 0) return; saveExpenses(); renderExpenses(); closeModal(); });
     }
     ['input', 'change'].forEach(type => { $('#exp-search').addEventListener(type, renderExpenses); $('#exp-filter-type').addEventListener(type, renderExpenses); categoryFilter.addEventListener(type, renderExpenses); $('#exp-sort').addEventListener(type, renderExpenses); });
@@ -150,8 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     function editBookmark(id) {
         const item = bookmarks.find(entry => String(entry.id) === String(id)); if (!item) return;
-        showModal(`<h3 class="font-bold text-gray-800">Ubah Tautan Bookmark</h3><form id="edit-bookmark-form" class="space-y-3"><label class="block text-sm">Judul<input id="edit-bm-title" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.title)}"></label><label class="block text-sm">URL<input id="edit-bm-url" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.url)}"></label><label class="block text-sm">Kategori<input id="edit-bm-category" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.category)}"></label><label class="block text-sm">Catatan<textarea id="edit-bm-notes" class="mt-1 w-full border rounded-xl p-2">${escapeHtml(item.notes)}</textarea></label><div class="flex justify-end gap-2"><button type="button" id="modal-cancel" class="px-4 py-2 bg-gray-100 rounded-xl">Batal</button><button class="px-4 py-2 bg-custom-primary text-white rounded-xl">Simpan</button></div></form>`);
-        bindCancel();
+        showEditForm('Ubah Tautan Bookmark', 'edit-bookmark-form', `<label class="block text-sm">Judul<input id="edit-bm-title" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.title)}"></label><label class="block text-sm">URL<input id="edit-bm-url" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.url)}"></label><label class="block text-sm">Kategori<input id="edit-bm-category" class="mt-1 w-full border rounded-xl p-2" required value="${escapeHtml(item.category)}"></label><label class="block text-sm">Catatan<textarea id="edit-bm-notes" class="mt-1 w-full border rounded-xl p-2">${escapeHtml(item.notes)}</textarea></label>`);
         $('#edit-bookmark-form').addEventListener('submit', event => { event.preventDefault(); const url = $('#edit-bm-url').value.trim(); if (!validUrl(url)) { $('#edit-bm-url').setCustomValidity('URL harus menggunakan http:// atau https://'); $('#edit-bm-url').reportValidity(); $('#edit-bm-url').setCustomValidity(''); return; } item.title = $('#edit-bm-title').value.trim(); item.url = url; item.category = $('#edit-bm-category').value.trim(); item.notes = $('#edit-bm-notes').value.trim(); saveBookmarks(); renderBookmarks(); closeModal(); });
     }
     $('#bm-search').addEventListener('input', renderBookmarks); $('#bm-sort').addEventListener('change', renderBookmarks);
