@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tab.classList.toggle("text-white", active);
       tab.classList.toggle("shadow-sm", active);
       tab.classList.toggle("text-gray-600", !active);
-      tab.setAttribute("aria-selected", String(active));
+      tab.setAttribute("aria-pressed", String(active));
     });
   }
   tabs.forEach((tab) =>
@@ -142,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <h3 class="font-bold text-gray-800">${title}</h3>
             <form id="${formId}" class="space-y-3" novalidate>
                 ${fields}
-                <p id="${errorId}" class="hidden text-sm text-rose-600" role="alert"></p>
+                <p id="${errorId}" class="hidden text-sm text-rose-700" role="alert"></p>
                 <div class="flex justify-end gap-2">
                     <button type="button" id="modal-cancel" class="px-4 py-2 bg-gray-100 rounded-xl">Batal</button>
                     <button class="px-4 py-2 bg-custom-primary text-white rounded-xl">Simpan</button>
@@ -241,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#total-balance").textContent = rupiah(income - spending);
     expenseList.replaceChildren();
     if (!filtered.length) {
-      expenseList.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">${expenses.length ? "Tidak ada transaksi yang cocok dengan filter." : "Belum ada data transaksi yang dicatat."}</div>`;
+      expenseList.innerHTML = `<div class="text-center py-8 text-gray-600 text-sm">${expenses.length ? "Tidak ada transaksi yang cocok dengan filter." : "Belum ada data transaksi yang dicatat."}</div>`;
       return;
     }
     filtered.forEach((item) => {
@@ -253,14 +253,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div>
                     <div class="flex items-center gap-2">
                         <span class="font-semibold text-gray-800 text-sm">${escapeHtml(item.title)}</span>
-                        <span class="text-xs ${incomeItem ? "text-emerald-600" : "text-rose-600"}">${escapeHtml(item.type)}</span>
+                        <span class="text-xs ${incomeItem ? "text-emerald-700" : "text-rose-700"}">${escapeHtml(item.type)}</span>
                     </div>
-                    <div class="text-xs text-gray-400">${escapeHtml(item.category)} &middot; ${escapeHtml(item.date)}</div>
+                    <div class="text-xs text-gray-600">${escapeHtml(item.category)} &middot; ${escapeHtml(item.date)}</div>
                 </div>
                 <div class="flex items-center justify-between sm:justify-end gap-3">
-                    <strong class="text-sm ${incomeItem ? "text-emerald-600" : "text-rose-600"}">${incomeItem ? "+" : "-"} ${rupiah(item.amount)}</strong>
+                    <strong class="text-sm ${incomeItem ? "text-emerald-700" : "text-rose-700"}">${incomeItem ? "+" : "-"} ${rupiah(item.amount)}</strong>
                     <button class="btn-edit-exp text-sm text-blue-600" data-id="${escapeHtml(item.id)}">Ubah</button>
-                    <button class="btn-del-exp text-sm text-rose-600" data-id="${escapeHtml(item.id)}">Hapus</button>
+                    <button class="btn-del-exp text-sm text-rose-700" data-id="${escapeHtml(item.id)}">Hapus</button>
                 </div>
             `;
       expenseList.appendChild(row);
@@ -397,7 +397,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = $("#bookmark-list");
     container.replaceChildren();
     if (!list.length) {
-      container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-400 text-sm">${bookmarks.length ? "Tidak ada bookmark yang cocok." : "Belum ada tautan bookmark yang tersimpan."}</div>`;
+      container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-600 text-sm">${bookmarks.length ? "Tidak ada bookmark yang cocok." : "Belum ada tautan bookmark yang tersimpan."}</div>`;
       return;
     }
     list.forEach((item) => {
@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 ${item.notes ? `<p class="text-xs text-gray-500">${escapeHtml(item.notes)}</p>` : ""}
                 <div class="flex justify-end gap-3 border-t pt-2">
                     <button class="edit-bookmark text-sm text-blue-600" data-id="${escapeHtml(item.id)}">Ubah</button>
-                    <button class="delete-bookmark text-sm text-rose-600" data-id="${escapeHtml(item.id)}">Hapus</button>
+                    <button class="delete-bookmark text-sm text-rose-700" data-id="${escapeHtml(item.id)}">Hapus</button>
                 </div>
             `;
       container.appendChild(card);
@@ -633,7 +633,7 @@ document.addEventListener("DOMContentLoaded", () => {
         button.type = "button";
         button.className =
           "w-full text-left px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-100";
-        button.innerHTML = `<span>${escapeHtml(option)}</span><span class="float-right text-xs text-gray-400">Pilihan ${String.fromCharCode(65 + index)}</span>`;
+        button.innerHTML = `<span>${escapeHtml(option)}</span><span class="float-right text-xs text-gray-600">Pilihan ${String.fromCharCode(65 + index)}</span>`;
         button.addEventListener("click", () => answerQuestion(index));
         options.appendChild(button);
       });

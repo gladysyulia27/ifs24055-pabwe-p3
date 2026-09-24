@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i assets/tailwind.input.css -o assets/app.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "tailwindcss": "4.3.3"
+  }
+}
